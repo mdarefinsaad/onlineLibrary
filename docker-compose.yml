@@ -1,0 +1,68 @@
+version: '2'
+services:
+        
+        grproxy:
+                container_name: grproxy
+                hostname: grproxy
+                build: grproxy/.
+                networks: 
+                        - se_frontend
+                        - se_backend
+                ports: 
+                        - 80:80
+        #--------------------------------------------------#
+        nginx:
+                container_name: nginx
+                hostname: nginx
+                build: nginx/.
+                volumes: 
+                        - ./nginx/www/.:/var/www/nginx/
+                networks: 
+                        - se_backend
+
+        #--------------------------------------------------#
+        hbase:
+                container_name: hbase
+                hostname: hbase
+                build: hbase/.
+                networks: 
+                        se_backend: 
+                                aliases: 
+                                        - zookeeper
+        #--------------------------------------------------#
+        gserve1:
+                container_name: gserve1
+                hostname: gserve1
+                build: gserve/.
+                networks: 
+                        - se_backend
+                depends_on: 
+                        - "hbase"
+                        - "grproxy"
+                environment: 
+                        - gserve_name=gserve1
+        #--------------------------------------------------#
+        gserve2:
+                container_name: gserve2
+                hostname: gserve2
+                build: gserve/.
+                networks: 
+                        - se_backend
+                depends_on: 
+                        - "hbase"
+                        - "grproxy"
+                environment: 
+                        - gserve_name=gserve2
+                
+networks:
+        se_frontend:
+                driver: bridge
+                # ipam:
+                #         config:
+                #                 - subnet: 162.0.0.0/24
+                
+        se_backend:
+                driver: bridge
+                # ipam:
+                #         config:
+                #                 - subnet: 182.0.0.0/24
